@@ -1,0 +1,162 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Import Views / Pages
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Clients from './pages/Clients';
+import ClientProfile from './pages/ClientProfile';
+import Appointments from './pages/Appointments';
+import Consultations from './pages/Consultations';
+import Payments from './pages/Payments';
+import Reports from './pages/Reports';
+import Astrologers from './pages/Astrologers';
+
+// Import Layout Components
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+
+// Protected Route Wrapper Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#090d16]">
+        <div className="flex flex-col items-center gap-4 animate-pulse">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 shadow shadow-indigo-500/10 flex items-center justify-center text-white font-extrabold text-xl">
+            🔮
+          </div>
+          <span className="text-xs text-gray-500 font-semibold tracking-widest uppercase">Synchronizing Portal Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Main Layout Frame containing Sidebar, Header, Content Scroll area
+const MainLayout = ({ children }) => {
+  return (
+    <div className="flex min-h-screen w-full bg-[#090d16] text-gray-100 font-sans selection:bg-[#6366f1] selection:text-white">
+      {/* Navigation Sidebar */}
+      <Sidebar />
+
+      {/* Main Column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header />
+        
+        {/* Scrollable View Area */}
+        <main className="flex-grow p-8 overflow-y-auto max-h-[calc(100vh-80px)]">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Authentication routes */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Protected CRM Dashboard routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Clients />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clients/:id"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ClientProfile />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/appointments"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Appointments />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/consultations"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Consultations />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payments"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Payments />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Reports />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/astrologers"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Astrologers />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback Redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+};
+
+export default App;
