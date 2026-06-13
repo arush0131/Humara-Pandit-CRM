@@ -50,18 +50,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to Astrologer CRM REST API (Development)' });
-  });
-}
+// Welcome test route
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Astrologer CRM REST API' });
+});
 
 // Error handling middlewares
 app.use(notFound);
