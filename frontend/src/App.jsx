@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Import Views / Pages
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
@@ -92,9 +93,23 @@ const CustomerLayout = ({ children }) => {
 const AppRoutes = () => {
   const { user, isAuthenticated } = useAuth();
 
-  if (isAuthenticated && user?.role === 'customer') {
+  // If unauthenticated, they can only view the public landing page or the login/register screen
+  if (!isAuthenticated) {
     return (
       <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        {/* Redirect everything else to landing page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // If authenticated as customer
+  if (user?.role === 'customer') {
+    return (
+      <Routes>
+        {/* If logged in, redirect auth routes to home dashboard */}
         <Route path="/login" element={<Navigate to="/" replace />} />
         
         <Route
@@ -150,8 +165,8 @@ const AppRoutes = () => {
   // Admin / Astrologer CRM Routes
   return (
     <Routes>
-      {/* Public Authentication routes */}
-      <Route path="/login" element={<Login />} />
+      {/* If logged in, redirect auth routes to home dashboard */}
+      <Route path="/login" element={<Navigate to="/" replace />} />
 
       {/* Protected CRM Dashboard routes */}
       <Route
