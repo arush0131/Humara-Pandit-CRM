@@ -1,8 +1,14 @@
 import axios from 'axios';
 
+// Determine base URL dynamically
+let baseUrlVal = import.meta.env.VITE_API_URL || '/api';
+if (baseUrlVal !== '/api' && !baseUrlVal.endsWith('/api') && !baseUrlVal.endsWith('/api/')) {
+  baseUrlVal = baseUrlVal.endsWith('/') ? `${baseUrlVal}api` : `${baseUrlVal}/api`;
+}
+
 // Create Axios client
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: baseUrlVal,
   headers: {
     'Content-Type': 'application/json',
   },
