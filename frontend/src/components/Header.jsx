@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, CheckCircle, Clock, Info } from 'lucide-react';
+import { Bell, CheckCircle, Clock, Info, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
   const { user } = useAuth();
   const location = useLocation();
   const [notifications, setNotifications] = useState([]);
@@ -78,10 +78,19 @@ const Header = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="h-20 bg-slate-900/30 border-b border-white/5 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-10">
-      <div>
-        <h2 className="text-xl font-bold text-gray-100 tracking-tight">{getPageTitle()}</h2>
-        <p className="text-xs text-gray-400 mt-0.5">Welcome back, {user?.name}</p>
+    <header className="h-20 bg-slate-900/30 border-b border-white/5 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-10">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="p-2 -ml-2 rounded-xl bg-slate-800/40 border border-white/5 text-gray-300 hover:text-white md:hidden cursor-pointer flex items-center justify-center"
+          title="Open Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div>
+          <h2 className="text-base md:text-xl font-bold text-gray-100 tracking-tight">{getPageTitle()}</h2>
+          <p className="text-[10px] md:text-xs text-gray-400 mt-0.5">Welcome back, {user?.name}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

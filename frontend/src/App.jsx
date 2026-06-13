@@ -51,17 +51,18 @@ const ProtectedRoute = ({ children }) => {
 
 // Main Layout Frame containing Sidebar, Header, Content Scroll area (For Admin/Astrologer)
 const MainLayout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   return (
     <div className="flex min-h-screen w-full bg-[#090d16] text-gray-100 font-sans selection:bg-[#6366f1] selection:text-white">
       {/* Navigation Sidebar */}
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Column */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header />
+        <Header onMenuClick={() => setSidebarOpen(true)} />
         
         {/* Scrollable View Area */}
-        <main className="flex-grow p-8 overflow-y-auto max-h-[calc(100vh-80px)]">
+        <main className="flex-grow p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-80px)]">
           {children}
         </main>
       </div>
@@ -71,17 +72,18 @@ const MainLayout = ({ children }) => {
 
 // Customer Layout Frame containing CustomerSidebar, Header, Content Scroll area (For Customer)
 const CustomerLayout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   return (
     <div className="flex min-h-screen w-full bg-[#090d16] text-gray-100 font-sans selection:bg-[#6366f1] selection:text-white">
       {/* Navigation Sidebar */}
-      <CustomerSidebar />
+      <CustomerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Column */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header />
+        <Header onMenuClick={() => setSidebarOpen(true)} />
         
         {/* Scrollable View Area */}
-        <main className="flex-grow p-8 overflow-y-auto max-h-[calc(100vh-80px)]">
+        <main className="flex-grow p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-80px)]">
           {children}
         </main>
       </div>
