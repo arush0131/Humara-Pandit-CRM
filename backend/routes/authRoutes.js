@@ -6,6 +6,8 @@ import {
   updateAstroProfile,
   forgotPassword,
   getAllAstrologers,
+  getAvailableAstrologers,
+  selectAstrologer,
 } from '../controllers/authController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -22,5 +24,9 @@ router.put('/profile', protect, authorize('astrologer', 'admin'), updateAstroPro
 router.route('/astrologers')
   .get(protect, authorize('admin'), getAllAstrologers)
   .post(protect, authorize('admin'), registerUser);
+
+// Customer-specific routes
+router.get('/customer/astrologers', protect, getAvailableAstrologers);
+router.put('/customer/select-astrologer', protect, selectAstrologer);
 
 export default router;

@@ -12,7 +12,14 @@ export const getAppointments = async (req, res, next) => {
     const { status, date } = req.query;
     const query = {};
 
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'customer') {
+      const client = await Client.findOne({ userId: req.user.id });
+      if (client) {
+        query.client = client._id;
+      } else {
+        return res.status(200).json({ success: true, count: 0, data: [] });
+      }
+    } else if (req.user.role !== 'admin') {
       query.astrologer = req.user.id;
     }
 
@@ -50,25 +57,43 @@ export const getAppointments = async (req, res, next) => {
 export const createAppointment = async (req, res, next) => {
   try {
     const { clientId, date, time, duration, type, price, notes } = req.body;
+    let targetClientId = clientId;
+    let targetAstrologerId = req.body.astrologerId;
 
-    if (!clientId || !date || !time) {
-      return res.status(400).json({ success: false, message: 'Please provide clientId, date, and time' });
+    if (req.user.role === 'customer') {
+      const client = await Client.findOne({ userId: req.user.id });
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'Customer profile not found' });
+      }
+      if (!client.addedBy) {
+        return res.status(400).json({ success: false, message: 'Please select an astrologer from the directory before booking.' });
+      }
+      targetClientId = client._id;
+      targetAstrologerId = client.addedBy;
+    } else {
+      if (!targetClientId) {
+        return res.status(400).json({ success: false, message: 'Please provide clientId' });
+      }
+      if (req.user.role !== 'admin') {
+        targetAstrologerId = req.user.id;
+      } else if (!targetAstrologerId) {
+        return res.status(400).json({ success: false, message: 'Please provide astrologerId' });
+      }
     }
 
-    const client = await Client.findById(clientId);
+    const client = await Client.findById(targetClientId);
     if (!client) {
       return res.status(404).json({ success: false, message: 'Client not found' });
     }
 
-    // Set astrologer as current logged in user (or allow specifying if admin)
-    const astrologerId = req.body.astrologerId && req.user.role === 'admin' ? req.body.astrologerId : req.user.id;
+    const astrologerId = targetAstrologerId;
 
     // Convert date string to Date Object (YYYY-MM-DD format safe parsing)
     const apptDate = new Date(date);
     apptDate.setUTCHours(0, 0, 0, 0);
 
     const appointment = await Appointment.create({
-      client: clientId,
+      client: targetClientId,
       astrologer: astrologerId,
       date: apptDate,
       time,
@@ -103,7 +128,14 @@ export const createAppointment = async (req, res, next) => {
 export const updateAppointment = async (req, res, next) => {
   try {
     const query = { _id: req.params.id };
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'customer') {
+      const client = await Client.findOne({ userId: req.user.id });
+      if (client) {
+        query.client = client._id;
+      } else {
+        return res.status(403).json({ success: false, message: 'Not authorized to update this appointment' });
+      }
+    } else if (req.user.role !== 'admin') {
       query.astrologer = req.user.id;
     }
 
@@ -123,9 +155,17 @@ export const updateAppointment = async (req, res, next) => {
     }
     if (time !== undefined) appointment.time = time;
     if (duration !== undefined) appointment.duration = Number(duration);
-    if (status !== undefined) appointment.status = status;
+    if (status !== undefined) {
+      // Customers can only cancel appointments
+      if (req.user.role === 'customer' && status !== 'cancelled') {
+        return res.status(403).json({ success: false, message: 'Customers are only permitted to cancel consultations.' });
+      }
+      appointment.status = status;
+    }
     if (type !== undefined) appointment.type = type;
-    if (price !== undefined) appointment.price = Number(price);
+    if (req.user.role !== 'customer') {
+      if (price !== undefined) appointment.price = Number(price);
+    }
     if (notes !== undefined) appointment.notes = notes;
 
     const updatedAppointment = await appointment.save();
@@ -168,7 +208,14 @@ export const updateAppointment = async (req, res, next) => {
 export const deleteAppointment = async (req, res, next) => {
   try {
     const query = { _id: req.params.id };
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'customer') {
+      const client = await Client.findOne({ userId: req.user.id });
+      if (client) {
+        query.client = client._id;
+      } else {
+        return res.status(403).json({ success: false, message: 'Not authorized to delete this appointment' });
+      }
+    } else if (req.user.role !== 'admin') {
       query.astrologer = req.user.id;
     }
 

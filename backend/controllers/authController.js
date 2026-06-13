@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Astrologer from '../models/Astrologer.js';
+import Client from '../models/Client.js';
+import Notification from '../models/Notification.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwtkeyforastrologercrm123', {
@@ -29,15 +31,28 @@ export const registerUser = async (req, res, next) => {
       role: role || 'astrologer',
     });
 
-    let astrologerProfile = null;
+    let profile = null;
     if (user.role === 'astrologer') {
-      astrologerProfile = await Astrologer.create({
+      profile = await Astrologer.create({
         user: user._id,
         phone: phone || '',
         specializations: specializations || ['Vedic'],
         experienceYears: experienceYears || 0,
         hourlyRate: hourlyRate || 0,
         bio: bio || '',
+      });
+    } else if (user.role === 'customer') {
+      profile = await Client.create({
+        name: user.name,
+        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : new Date(),
+        timeOfBirth: req.body.timeOfBirth || '12:00',
+        placeOfBirth: req.body.placeOfBirth || 'Unknown',
+        gender: req.body.gender || 'male',
+        mobileNumber: req.body.mobileNumber || '9999999999',
+        email: user.email,
+        address: req.body.address || '',
+        userId: user._id,
+        addedBy: null, // Selects astrologer later
       });
     }
 
@@ -51,7 +66,7 @@ export const registerUser = async (req, res, next) => {
         role: user.role,
         status: user.status,
       },
-      profile: astrologerProfile,
+      profile: profile,
     });
   } catch (error) {
     next(error);
@@ -91,6 +106,8 @@ export const loginUser = async (req, res, next) => {
     let profile = null;
     if (user.role === 'astrologer') {
       profile = await Astrologer.findOne({ user: user._id });
+    } else if (user.role === 'customer') {
+      profile = await Client.findOne({ userId: user._id }).populate('addedBy', 'name email');
     }
 
     res.status(200).json({
@@ -122,6 +139,8 @@ export const getMe = async (req, res, next) => {
     
     if (user.role === 'astrologer') {
       profile = await Astrologer.findOne({ user: user._id });
+    } else if (user.role === 'customer') {
+      profile = await Client.findOne({ userId: user._id }).populate('addedBy', 'name email');
     }
 
     res.status(200).json({
@@ -238,4 +257,82 @@ export const getAllAstrologers = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Get list of all active astrologers
+ * @route   GET /api/auth/customer/astrologers
+ * @access  Private (Customer/All)
+ */
+export const getAvailableAstrologers = async (req, res, next) => {
+  try {
+    const users = await User.find({ role: 'astrologer', status: 'active' });
+    const astrologersList = [];
+    
+    for (const user of users) {
+      const profile = await Astrologer.findOne({ user: user._id });
+      astrologersList.push({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        profile,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: astrologersList.length,
+      data: astrologersList,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Customer selects/changes preferred astrologer
+ * @route   PUT /api/auth/customer/select-astrologer
+ * @access  Private (Customer Only)
+ */
+export const selectAstrologer = async (req, res, next) => {
+  try {
+    const { astrologerId } = req.body;
+    if (!astrologerId) {
+      return res.status(400).json({ success: false, message: 'Please provide astrologerId' });
+    }
+
+    // Verify astrologer exists
+    const astrologer = await User.findOne({ _id: astrologerId, role: 'astrologer' });
+    if (!astrologer) {
+      return res.status(404).json({ success: false, message: 'Astrologer not found' });
+    }
+
+    // Find client profile linked to customer
+    const client = await Client.findOne({ userId: req.user.id });
+    if (!client) {
+      return res.status(404).json({ success: false, message: 'Customer profile not found' });
+    }
+
+    client.addedBy = astrologerId;
+    await client.save();
+
+    // Create a dashboard notification for the selected astrologer
+    await Notification.create({
+      recipient: astrologerId,
+      title: 'New Client Assigned',
+      message: `${client.name} has selected you as their preferred astrologer.`,
+      type: 'alert',
+    });
+
+    const populatedClient = await Client.findOne({ userId: req.user.id }).populate('addedBy', 'name email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Astrologer selected successfully',
+      data: populatedClient,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 

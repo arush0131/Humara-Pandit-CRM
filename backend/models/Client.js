@@ -55,10 +55,16 @@ const clientSchema = new mongoose.Schema(
         ref: 'Consultation',
       },
     ],
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      unique: true,
+      sparse: true,
+    },
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
     },
   },
   {

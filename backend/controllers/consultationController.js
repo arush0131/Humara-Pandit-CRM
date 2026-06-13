@@ -15,7 +15,14 @@ export const getConsultations = async (req, res, next) => {
     const { clientId } = req.query;
     const query = {};
 
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'customer') {
+      const client = await Client.findOne({ userId: req.user.id });
+      if (client) {
+        query.client = client._id;
+      } else {
+        return res.status(200).json({ success: true, count: 0, data: [] });
+      }
+    } else if (req.user.role !== 'admin') {
       query.astrologer = req.user.id;
     }
 
@@ -46,7 +53,14 @@ export const getConsultations = async (req, res, next) => {
 export const getConsultationById = async (req, res, next) => {
   try {
     const query = { _id: req.params.id };
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'customer') {
+      const client = await Client.findOne({ userId: req.user.id });
+      if (client) {
+        query.client = client._id;
+      } else {
+        return res.status(403).json({ success: false, message: 'Not authorized to view this consultation' });
+      }
+    } else if (req.user.role !== 'admin') {
       query.astrologer = req.user.id;
     }
 

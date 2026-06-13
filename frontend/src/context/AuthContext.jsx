@@ -90,6 +90,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (signUpData) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/register', signUpData);
+      if (response.data.success) {
+        const { token: jwtToken, user: userData, profile: profileData } = response.data;
+        
+        localStorage.setItem('token', jwtToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (profileData) {
+          localStorage.setItem('profile', JSON.stringify(profileData));
+        } else {
+          localStorage.removeItem('profile');
+        }
+
+        setToken(jwtToken);
+        setUser(userData);
+        setProfile(profileData);
+        return { success: true };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed',
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -116,6 +146,7 @@ export const AuthProvider = ({ children }) => {
     profile,
     loading,
     login,
+    register,
     logout,
     updateProfile,
     isAuthenticated: !!token,

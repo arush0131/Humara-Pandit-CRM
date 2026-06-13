@@ -13,8 +13,15 @@ import Payments from './pages/Payments';
 import Reports from './pages/Reports';
 import Astrologers from './pages/Astrologers';
 
+// Import Customer Views
+import CustomerDashboard from './pages/CustomerDashboard';
+import CustomerAstrologers from './pages/CustomerAstrologers';
+import CustomerBook from './pages/CustomerBook';
+import CustomerRemedies from './pages/CustomerRemedies';
+
 // Import Layout Components
 import Sidebar from './components/Sidebar';
+import CustomerSidebar from './components/CustomerSidebar';
 import Header from './components/Header';
 
 // Protected Route Wrapper Component
@@ -41,7 +48,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Main Layout Frame containing Sidebar, Header, Content Scroll area
+// Main Layout Frame containing Sidebar, Header, Content Scroll area (For Admin/Astrologer)
 const MainLayout = ({ children }) => {
   return (
     <div className="flex min-h-screen w-full bg-[#090d16] text-gray-100 font-sans selection:bg-[#6366f1] selection:text-white">
@@ -61,99 +68,184 @@ const MainLayout = ({ children }) => {
   );
 };
 
+// Customer Layout Frame containing CustomerSidebar, Header, Content Scroll area (For Customer)
+const CustomerLayout = ({ children }) => {
+  return (
+    <div className="flex min-h-screen w-full bg-[#090d16] text-gray-100 font-sans selection:bg-[#6366f1] selection:text-white">
+      {/* Navigation Sidebar */}
+      <CustomerSidebar />
+
+      {/* Main Column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header />
+        
+        {/* Scrollable View Area */}
+        <main className="flex-grow p-8 overflow-y-auto max-h-[calc(100vh-80px)]">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+// Component to handle inner routes so we have access to useAuth hook
+const AppRoutes = () => {
+  const { user, isAuthenticated } = useAuth();
+
+  if (isAuthenticated && user?.role === 'customer') {
+    return (
+      <Routes>
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <CustomerDashboard />
+              </CustomerLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/find-astrologer"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <CustomerAstrologers />
+              </CustomerLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/book"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <CustomerBook />
+              </CustomerLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/remedies"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <CustomerRemedies />
+              </CustomerLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback Redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // Admin / Astrologer CRM Routes
+  return (
+    <Routes>
+      {/* Public Authentication routes */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected CRM Dashboard routes */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Dashboard />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Clients />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/:id"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ClientProfile />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/appointments"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Appointments />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/consultations"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Consultations />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Payments />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Reports />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/astrologers"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Astrologers />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback Redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
 const App = () => {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Public Authentication routes */}
-          <Route path="/login" element={<Login />} />
-
-          {/* Protected CRM Dashboard routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Clients />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/clients/:id"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <ClientProfile />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/appointments"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Appointments />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/consultations"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Consultations />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payments"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Payments />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Reports />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/astrologers"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Astrologers />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Fallback Redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppRoutes />
       </Router>
     </AuthProvider>
   );
